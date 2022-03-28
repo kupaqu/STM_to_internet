@@ -20,11 +20,24 @@ int main() {
 	esp_serial.set_format(8, BufferedSerial::None, 1);
 
     button.mode(PullUp);
+
+    unsigned char mode = 0;
+    unsigned char states_sum;
     unsigned char p = ain.read_u16()>>8;
-    unsigned char buf[] = { p };
-    while(1) {
+    unsigned char buf[] = { 0 };
+    while (1) {
         p = ain.read_u16();
-        unsigned char buf[0] = p;
+        states_sum = 0;
+        for (int i = 0; i < 10; i++) {
+            states_sum += button.read();
+            ThisThread::sleep_for(1);
+        }
+        if (states_sum < 5) {
+            mode = mode == 0 ? 1 : 0;
+        }
+
+        printf("%d\n", p*mode);
+        buf[0] = p*mode;
         esp_serial.write(buf, sizeof(buf));
         ThisThread::sleep_for(1000);
     }
